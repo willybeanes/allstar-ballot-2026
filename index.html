@@ -437,11 +437,13 @@ function warBarColor(w, minW, maxW) {
   return `rgb(${r},${g},${b})`;
 }
 
-function warTextColor(w) {
-  if (w >= 3.0) return '#16a34a';
-  if (w >= 1.5) return '#2563eb';
-  if (w >= 0)   return '#aaa';
-  return '#dc2626';
+function warTextColor(w, minW, maxW) {
+  const range = maxW - minW || 1;
+  const t = Math.max(0, Math.min(1, (w - minW) / range));
+  const r = Math.round(220 + (22  - 220) * t);
+  const g = Math.round(38  + (163 - 38)  * t);
+  const b = Math.round(38  + (74  - 38)  * t);
+  return `rgb(${r},${g},${b})`;
 }
 
 function fmtVotes(v) {
@@ -525,7 +527,7 @@ function buildLeague(lg, colEl) {
           </div>
           <div class="bar-row">
             <div class="bar-track"><div class="bar-fill" style="width:${warBarPct}%;background:${warBarColor(war, posMinWar, posMaxWar)};"></div></div>
-            <span class="war-val" style="color:${warTextColor(war)};">${war.toFixed(1)}</span>
+            <span class="war-val" style="color:${warTextColor(war, posMinWar, posMaxWar)};">${war.toFixed(1)}</span>
           </div>
         </div>
         ${isStarter ? `<span class="star-badge">★</span>` : `<span class="star-spacer"></span>`}
