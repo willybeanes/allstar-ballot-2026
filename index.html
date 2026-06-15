@@ -180,7 +180,12 @@
   </div>
 </div>
 
-<div class="updated">Data current as of June 15, 2026 · Built with fg-proxy</div>
+<div class="updated" id="updated-line">
+  Votes updated <span id="votes-date">June 15, 2026</span>
+  &nbsp;·&nbsp;
+  fWAR updated <span id="fwar-date">loading…</span>
+  &nbsp;·&nbsp; Built with fg-proxy
+</div>
 
 <script>
 const POS_ORDER = ['C','1B','2B','3B','SS','DH','OF'];
@@ -353,9 +358,9 @@ const DATA = [
 ];
 
 const ALL_WAR = DATA.map(d => d[5]);
-const MAX_WAR = Math.max(...ALL_WAR);
-const MIN_WAR = Math.min(...ALL_WAR);
-const WAR_RANGE = MAX_WAR - MIN_WAR;
+let MAX_WAR = Math.max(...ALL_WAR);
+let MIN_WAR = Math.min(...ALL_WAR);
+let WAR_RANGE = MAX_WAR - MIN_WAR;
 
 function warBarColor(w) {
   const t = Math.max(0, Math.min(1, (w - MIN_WAR) / WAR_RANGE));
@@ -432,8 +437,62 @@ function buildLeague(lg, colEl) {
   });
 }
 
-buildLeague('AL', document.getElementById('al-col'));
-buildLeague('NL', document.getElementById('nl-col'));
+// Normalize player names for fuzzy matching (strip accents, lowercase)
+function normName(s) {
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+}
+
+async function fetchLiveWAR() {
+  const FG_PROXY = 'https://fg-proxy.vercel.app';
+  const params = new URLSearchParams({
+    pos: 'all', stats: 'bat', lg: 'all', qual: '0',
+    season: '2026', season1: '2026', ind: '0', team: '0',
+    sortstat: 'WAR', sortdir: 'default', pageitems: '500', pagenum: '1',
+  });
+  const res = await fetch(`${FG_PROXY}/api/fangraphs?${params}`);
+  if (!res.ok) throw new Error(`fg-proxy ${res.status}`);
+  const json = await res.json();
+  // Build name → WAR lookup
+  const lookup = new Map();
+  for (const p of (json.data ?? [])) {
+    if (p.PlayerName != null && p.WAR != null) {
+      lookup.set(normName(p.PlayerName), parseFloat(p.WAR));
+    }
+  }
+  return { lookup, fetchedAt: new Date(res.headers.get('Date') || Date.now()) };
+}
+
+function fmtDate(d) {
+  return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+}
+
+async function init() {
+  let warLookup = null;
+
+  try {
+    const { lookup, fetchedAt } = await fetchLiveWAR();
+    warLookup = lookup;
+    // Patch DATA in place with live WAR values
+    for (const row of DATA) {
+      const live = lookup.get(normName(row[2]));
+      if (live !== undefined) row[5] = live;
+    }
+    // Recompute WAR range with live values
+    const allWar = DATA.map(d => d[5]);
+    MAX_WAR = Math.max(...allWar);
+    MIN_WAR = Math.min(...allWar);
+    WAR_RANGE = MAX_WAR - MIN_WAR;
+    document.getElementById('fwar-date').textContent = fmtDate(fetchedAt);
+  } catch (e) {
+    console.warn('fWAR fetch failed, using cached values:', e.message);
+    document.getElementById('fwar-date').textContent = 'June 15, 2026 (cached)';
+  }
+
+  buildLeague('AL', document.getElementById('al-col'));
+  buildLeague('NL', document.getElementById('nl-col'));
+}
+
+init();
 </script>
 </body>
 </html>
