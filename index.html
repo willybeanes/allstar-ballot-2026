@@ -418,6 +418,22 @@ function normName(s) {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 }
 
+// Map DATA team names → FanGraphs team abbreviations
+const TEAM_FG = {
+  'Angels':'LAA','Astros':'HOU','Athletics':'ATH','Blue Jays':'TOR',
+  'Braves':'ATL','Brewers':'MIL','Cardinals':'STL','Cubs':'CHC',
+  'D-backs':'ARI','Dodgers':'LAD','Giants':'SFG','Guardians':'CLE',
+  'Mariners':'SEA','Marlins':'MIA','Mets':'NYM','Nationals':'WSN',
+  'Orioles':'BAL','Padres':'SDP','Phillies':'PHI','Pirates':'PIT',
+  'Rangers':'TEX','Rays':'TBR','Red Sox':'BOS','Reds':'CIN',
+  'Rockies':'COL','Royals':'KCR','Tigers':'DET','Twins':'MIN',
+  'White Sox':'CWS','Yankees':'NYY',
+};
+
+function lookupKey(name, team) {
+  return normName(name) + '|' + (TEAM_FG[team] || team).toLowerCase();
+}
+
 function warBarColor(w) {
   const t = Math.max(0, Math.min(1, (w - MIN_WAR) / WAR_RANGE));
   const r = Math.round(220 + (22  - 220) * t);
@@ -469,7 +485,7 @@ function buildLeague(lg, colEl) {
       const isStarter = i < starCount;
       const votePct = Math.round((votes / maxVotes) * 100);
       const warBarPct = Math.max(0, Math.round(((war - MIN_WAR) / WAR_RANGE) * 100));
-      const mlbId = mlbIdMap.get(normName(name));
+      const mlbId = mlbIdMap.get(normName(name) + '|' + club);
 
       const row = document.createElement('div');
       row.className = 'player-row' + (isStarter ? ' starter' : '');
@@ -541,8 +557,12 @@ async function fetchLiveWAR() {
   const lookup = new Map();
   for (const p of (json.data ?? [])) {
     if (!p.PlayerName) continue;
-    const key = normName(p.PlayerName);
-    lookup.set(key, { war: parseFloat(p.WAR ?? 0), mlbId: p.xMLBAMID ?? p.MLBAMID ?? null });
+    const entry = { war: parseFloat(p.WAR ?? 0), mlbId: p.xMLBAMID ?? p.MLBAMID ?? null };
+    // Store by both name|team (preferred) and name-only fallback
+    const teamKey = lookupKey(p.PlayerName, p.Team ?? '');
+    const nameKey = normName(p.PlayerName);
+    lookup.set(teamKey, entry);
+    if (!lookup.has(nameKey)) lookup.set(nameKey, entry); // first occurrence wins for name-only
   }
   return { lookup, fetchedAt: new Date(res.headers.get('Date') || Date.now()) };
 }
@@ -552,11 +572,11 @@ async function init() {
     const { lookup, fetchedAt } = await fetchLiveWAR();
 
     for (const row of DATA) {
-      const key = normName(row[2]);
-      const live = lookup.get(key);
+      // Prefer name|team match to avoid same-name collisions (e.g. two Max Muncys)
+      const live = lookup.get(lookupKey(row[2], row[3])) ?? lookup.get(normName(row[2]));
       if (live) {
         row[5] = live.war;
-        if (live.mlbId) mlbIdMap.set(key, live.mlbId);
+        if (live.mlbId) mlbIdMap.set(normName(row[2]) + '|' + row[3], live.mlbId);
       }
     }
 
