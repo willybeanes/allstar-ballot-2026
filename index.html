@@ -16,55 +16,55 @@
       background: #f0ede8;
       color: #1a1a1a;
       min-height: 100vh;
-      padding: 28px 16px 48px;
+      padding: 36px 20px 60px;
     }
 
     header {
-      max-width: 1000px;
-      margin: 0 auto 24px;
+      max-width: 1160px;
+      margin: 0 auto 28px;
     }
     header h1 {
-      font-size: 1.45rem;
+      font-size: 1.75rem;
       font-weight: 700;
       letter-spacing: -0.03em;
       color: #1a1a1a;
     }
     header p {
-      font-size: 0.8rem;
+      font-size: 0.9rem;
       color: #888;
-      margin-top: 3px;
+      margin-top: 4px;
       letter-spacing: -0.01em;
     }
 
     .legend {
       display: flex;
-      gap: 1.25rem;
+      gap: 1.5rem;
       flex-wrap: wrap;
-      margin-top: 10px;
-      font-size: 0.72rem;
+      margin-top: 12px;
+      font-size: 0.82rem;
       color: #888;
     }
-    .legend-item { display: flex; align-items: center; gap: 5px; }
-    .legend-swatch { width: 20px; height: 4px; border-radius: 2px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .legend-swatch { width: 24px; height: 5px; border-radius: 2px; }
 
     .grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      max-width: 1000px;
+      gap: 24px;
+      max-width: 1160px;
       margin: 0 auto;
     }
-    @media (max-width: 640px) {
+    @media (max-width: 700px) {
       .grid { grid-template-columns: 1fr; }
     }
 
     .league-label {
-      font-size: 0.7rem;
+      font-size: 0.78rem;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.06em;
       color: #888;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
       padding-left: 2px;
     }
 
@@ -73,34 +73,34 @@
       border-radius: 16px;
       border: 1px solid rgba(0,0,0,0.08);
       box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-      padding: 14px 16px;
-      margin-bottom: 12px;
+      padding: 18px 20px;
+      margin-bottom: 14px;
     }
 
     .pos-label {
-      font-size: 0.65rem;
+      font-size: 0.72rem;
       font-weight: 600;
       letter-spacing: 0.06em;
       text-transform: uppercase;
       color: #bbb;
-      margin-bottom: 8px;
-      padding-bottom: 7px;
+      margin-bottom: 10px;
+      padding-bottom: 9px;
       border-bottom: 1px solid #f0ede8;
     }
 
     .player-row {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 5px 0;
+      gap: 10px;
+      padding: 7px 0;
       border-bottom: 1px solid #f5f3f0;
     }
     .player-row:last-child { border-bottom: none; }
 
     /* Headshot */
     .headshot-wrap {
-      width: 32px;
-      height: 32px;
+      width: 44px;
+      height: 44px;
       flex-shrink: 0;
       border-radius: 50%;
       overflow: hidden;
@@ -116,16 +116,16 @@
       border-radius: 50%;
     }
     .headshot-initials {
-      font-size: 0.6rem;
+      font-size: 0.68rem;
       font-weight: 600;
       color: #bbb;
       letter-spacing: -0.02em;
     }
 
     .rank {
-      font-size: 0.62rem;
+      font-size: 0.72rem;
       color: #ccc;
-      width: 10px;
+      width: 14px;
       text-align: right;
       flex-shrink: 0;
     }
@@ -135,7 +135,7 @@
       min-width: 0;
     }
     .player-name {
-      font-size: 0.75rem;
+      font-size: 0.88rem;
       font-weight: 500;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -145,58 +145,58 @@
     }
     .starter .player-name { font-weight: 700; color: #1a1a1a; }
     .player-club {
-      font-size: 0.62rem;
+      font-size: 0.72rem;
       color: #aaa;
-      margin-top: 1px;
+      margin-top: 2px;
     }
 
     .bars-col {
-      width: 110px;
+      width: 130px;
       flex-shrink: 0;
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 5px;
     }
-    .bar-row { display: flex; align-items: center; gap: 5px; }
+    .bar-row { display: flex; align-items: center; gap: 6px; }
     .bar-track {
       flex: 1;
-      height: 4px;
+      height: 6px;
       background: #f0ede8;
-      border-radius: 2px;
+      border-radius: 3px;
       overflow: hidden;
     }
-    .bar-fill { height: 4px; border-radius: 2px; }
+    .bar-fill { height: 6px; border-radius: 3px; }
     .bar-val {
-      font-size: 0.6rem;
+      font-size: 0.7rem;
       color: #aaa;
-      width: 28px;
+      width: 32px;
       text-align: right;
       flex-shrink: 0;
       font-variant-numeric: tabular-nums;
     }
     .war-val {
-      font-size: 0.62rem;
+      font-size: 0.72rem;
       font-weight: 600;
-      width: 28px;
+      width: 32px;
       text-align: right;
       flex-shrink: 0;
       font-variant-numeric: tabular-nums;
     }
 
     .star-badge {
-      font-size: 0.58rem;
+      font-size: 0.65rem;
       font-weight: 700;
-      padding: 2px 5px;
+      padding: 3px 6px;
       border-radius: 4px;
       flex-shrink: 0;
       color: #fff;
       background: #1a1a1a;
     }
-    .star-spacer { width: 22px; flex-shrink: 0; }
+    .star-spacer { width: 26px; flex-shrink: 0; }
 
     footer {
       text-align: center;
-      font-size: 0.7rem;
+      font-size: 0.78rem;
       color: #bbb;
       margin-top: 2rem;
       letter-spacing: -0.01em;
