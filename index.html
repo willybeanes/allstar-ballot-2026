@@ -4,125 +4,171 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>2026 MLB All-Star Ballot — Votes &amp; fWAR</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚾</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #0f1117;
-      color: #e8e8e8;
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f0ede8;
+      color: #1a1a1a;
       min-height: 100vh;
-      padding: 2rem 1rem;
+      padding: 28px 16px 48px;
     }
 
-    .page-header {
-      text-align: center;
-      margin-bottom: 2rem;
+    header {
+      max-width: 1000px;
+      margin: 0 auto 24px;
     }
-    .page-header h1 {
-      font-size: 1.4rem;
-      font-weight: 600;
-      color: #fff;
-      margin-bottom: 0.25rem;
+    header h1 {
+      font-size: 1.45rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: #1a1a1a;
     }
-    .page-header p {
+    header p {
       font-size: 0.8rem;
       color: #888;
+      margin-top: 3px;
+      letter-spacing: -0.01em;
     }
 
     .legend {
       display: flex;
       gap: 1.25rem;
-      justify-content: center;
       flex-wrap: wrap;
-      margin-bottom: 1.75rem;
+      margin-top: 10px;
       font-size: 0.72rem;
       color: #888;
     }
     .legend-item { display: flex; align-items: center; gap: 5px; }
-    .legend-swatch { width: 22px; height: 5px; border-radius: 2px; }
+    .legend-swatch { width: 20px; height: 4px; border-radius: 2px; }
 
     .grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
-      max-width: 960px;
+      gap: 20px;
+      max-width: 1000px;
       margin: 0 auto;
     }
-
-    @media (max-width: 600px) {
+    @media (max-width: 640px) {
       .grid { grid-template-columns: 1fr; }
     }
 
-    .league-header {
-      font-size: 0.85rem;
+    .league-label {
+      font-size: 0.7rem;
       font-weight: 600;
-      padding: 7px 10px;
-      border-radius: 6px;
-      color: #fff;
-      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #888;
+      margin-bottom: 10px;
+      padding-left: 2px;
     }
-    .al-header { background: #1F3864; }
-    .nl-header { background: #6B1A1A; }
 
-    .pos-block { margin-bottom: 1.5rem; }
+    .pos-card {
+      background: #fff;
+      border-radius: 16px;
+      border: 1px solid rgba(0,0,0,0.08);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      padding: 14px 16px;
+      margin-bottom: 12px;
+    }
+
     .pos-label {
       font-size: 0.65rem;
       font-weight: 600;
-      letter-spacing: .06em;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
-      color: #555;
-      margin-bottom: 5px;
-      padding-bottom: 4px;
-      border-bottom: 1px solid #222;
+      color: #bbb;
+      margin-bottom: 8px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid #f0ede8;
     }
 
     .player-row {
       display: flex;
       align-items: center;
-      gap: 7px;
-      padding: 4px 0;
-      border-bottom: 1px solid #1a1a1a;
+      gap: 8px;
+      padding: 5px 0;
+      border-bottom: 1px solid #f5f3f0;
     }
     .player-row:last-child { border-bottom: none; }
 
+    /* Headshot */
+    .headshot-wrap {
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      overflow: hidden;
+      background: #f0ede8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .headshot-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+    .headshot-initials {
+      font-size: 0.6rem;
+      font-weight: 600;
+      color: #bbb;
+      letter-spacing: -0.02em;
+    }
+
     .rank {
-      font-size: 0.65rem;
-      color: #444;
-      width: 12px;
+      font-size: 0.62rem;
+      color: #ccc;
+      width: 10px;
       text-align: right;
       flex-shrink: 0;
     }
-    .name-col { flex: 1; min-width: 0; }
+
+    .name-col {
+      flex: 1;
+      min-width: 0;
+    }
     .player-name {
-      font-size: 0.72rem;
+      font-size: 0.75rem;
+      font-weight: 500;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      color: #ddd;
+      color: #333;
+      letter-spacing: -0.01em;
     }
-    .starter .player-name { font-weight: 600; color: #fff; }
-    .player-club { font-size: 0.62rem; color: #555; }
+    .starter .player-name { font-weight: 700; color: #1a1a1a; }
+    .player-club {
+      font-size: 0.62rem;
+      color: #aaa;
+      margin-top: 1px;
+    }
 
     .bars-col {
-      width: 108px;
+      width: 110px;
       flex-shrink: 0;
       display: flex;
       flex-direction: column;
       gap: 3px;
     }
-    .bar-row { display: flex; align-items: center; gap: 4px; }
+    .bar-row { display: flex; align-items: center; gap: 5px; }
     .bar-track {
       flex: 1;
-      height: 5px;
-      background: #1e1e1e;
+      height: 4px;
+      background: #f0ede8;
       border-radius: 2px;
       overflow: hidden;
     }
-    .bar-fill { height: 5px; border-radius: 2px; }
+    .bar-fill { height: 4px; border-radius: 2px; }
     .bar-val {
-      font-size: 0.62rem;
-      color: #555;
+      font-size: 0.6rem;
+      color: #aaa;
       width: 28px;
       text-align: right;
       flex-shrink: 0;
@@ -138,62 +184,64 @@
     }
 
     .star-badge {
-      font-size: 0.6rem;
+      font-size: 0.58rem;
       font-weight: 700;
-      padding: 1px 4px;
-      border-radius: 3px;
+      padding: 2px 5px;
+      border-radius: 4px;
       flex-shrink: 0;
       color: #fff;
+      background: #1a1a1a;
     }
-    .al-badge { background: #1F3864; }
-    .nl-badge { background: #6B1A1A; }
-    .star-spacer { width: 18px; flex-shrink: 0; }
+    .star-spacer { width: 22px; flex-shrink: 0; }
 
-    .updated {
+    footer {
       text-align: center;
       font-size: 0.7rem;
-      color: #444;
-      margin-top: 2.5rem;
+      color: #bbb;
+      margin-top: 2rem;
+      letter-spacing: -0.01em;
     }
   </style>
 </head>
 <body>
 
-<div class="page-header">
-  <h1>2026 MLB All-Star Ballot — Update #1</h1>
-  <p>Vote totals as of June 15, 2026 &nbsp;·&nbsp; fWAR via FanGraphs &nbsp;·&nbsp; ★ = current starter</p>
-</div>
-
-<div class="legend">
-  <div class="legend-item"><span class="legend-swatch" style="background:#378ADD;"></span> Votes (relative to position leader)</div>
-  <div class="legend-item"><span class="legend-swatch" style="background:#3B6D11;"></span><span class="legend-swatch" style="background:#E24B4A;"></span> fWAR (green = high · red = low)</div>
-</div>
+<header>
+  <h1>2026 MLB All-Star Ballot</h1>
+  <p>Vote totals as of <span id="votes-date">June 15, 2026</span> &nbsp;·&nbsp; fWAR via FanGraphs &nbsp;·&nbsp; ★ = current starter</p>
+  <div class="legend">
+    <div class="legend-item"><span class="legend-swatch" style="background:#2563eb;"></span> Votes (vs. position leader)</div>
+    <div class="legend-item"><span class="legend-swatch" style="background:#16a34a;"></span><span class="legend-swatch" style="background:#dc2626;"></span> fWAR (green = high · red = low)</div>
+  </div>
+</header>
 
 <div class="grid">
   <div>
-    <div class="league-header al-header">American League</div>
+    <div class="league-label">American League</div>
     <div id="al-col"></div>
   </div>
   <div>
-    <div class="league-header nl-header">National League</div>
+    <div class="league-label">National League</div>
     <div id="nl-col"></div>
   </div>
 </div>
 
-<div class="updated" id="updated-line">
-  Votes updated <span id="votes-date">June 15, 2026</span>
+<footer>
+  Votes updated <span id="footer-votes-date">June 15, 2026</span>
   &nbsp;·&nbsp;
   fWAR updated <span id="fwar-date">loading…</span>
-  &nbsp;·&nbsp; Built with fg-proxy
-</div>
+  &nbsp;·&nbsp;
+  Built with fg-proxy
+</footer>
 
 <script>
+const FG_PROXY = 'https://fg-proxy.vercel.app';
 const POS_ORDER = ['C','1B','2B','3B','SS','DH','OF'];
 const POS_LABELS = {
-  C:'Catcher', '1B':'First base', '2B':'Second base',
-  '3B':'Third base', SS:'Shortstop', DH:'Designated hitter', OF:'Outfield'
+  C:'Catcher', '1B':'First Base', '2B':'Second Base',
+  '3B':'Third Base', SS:'Shortstop', DH:'DH / Utility', OF:'Outfield'
 };
 
+// [league, pos, name, club, votes, fWAR (fallback)]
 const DATA = [
   ["AL","C","Shea Langeliers","Athletics",715625,2.4],
   ["AL","C","Alejandro Kirk","Blue Jays",298401,0.3],
@@ -357,35 +405,49 @@ const DATA = [
   ["NL","OF","Jung Hoo Lee","Giants",166215,1.2],
 ];
 
-const ALL_WAR = DATA.map(d => d[5]);
+// WAR range (recomputed after live fetch)
+let ALL_WAR = DATA.map(d => d[5]);
 let MAX_WAR = Math.max(...ALL_WAR);
 let MIN_WAR = Math.min(...ALL_WAR);
 let WAR_RANGE = MAX_WAR - MIN_WAR;
 
+// mlbId lookup: normalized name → mlbam id (populated from fg-proxy response)
+const mlbIdMap = new Map();
+
+function normName(s) {
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+}
+
 function warBarColor(w) {
   const t = Math.max(0, Math.min(1, (w - MIN_WAR) / WAR_RANGE));
-  const r = Math.round(226 + (59  - 226) * t);
-  const g = Math.round(75  + (153 - 75)  * t);
-  const b = Math.round(74  + (17  - 74)  * t);
+  const r = Math.round(220 + (22  - 220) * t);
+  const g = Math.round(38  + (163 - 38)  * t);
+  const b = Math.round(38  + (74  - 38)  * t);
   return `rgb(${r},${g},${b})`;
 }
 
 function warTextColor(w) {
-  if (w >= 3.0) return '#7ac44e';
-  if (w >= 1.5) return '#6aabf7';
-  if (w >= 0)   return '#666';
-  return '#e06060';
+  if (w >= 3.0) return '#16a34a';
+  if (w >= 1.5) return '#2563eb';
+  if (w >= 0)   return '#aaa';
+  return '#dc2626';
 }
 
 function fmtVotes(v) {
-  if (v >= 1000000) return (v / 1000000).toFixed(1) + 'M';
+  if (v >= 1_000_000) return (v / 1_000_000).toFixed(1) + 'M';
   return Math.round(v / 1000) + 'K';
+}
+
+function initials(name) {
+  return name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
+}
+
+function headshotUrl(mlbId) {
+  return `${FG_PROXY}/api/headshot?id=${mlbId}`;
 }
 
 function buildLeague(lg, colEl) {
   const lgData = DATA.filter(d => d[0] === lg);
-  const isAL = lg === 'AL';
-  const badgeClass = isAL ? 'al-badge' : 'nl-badge';
 
   POS_ORDER.forEach(pos => {
     const rows = lgData.filter(d => d[1] === pos);
@@ -394,22 +456,47 @@ function buildLeague(lg, colEl) {
     const maxVotes = Math.max(...rows.map(r => r[4]));
     const starCount = pos === 'OF' ? 3 : 1;
 
-    const block = document.createElement('div');
-    block.className = 'pos-block';
+    const card = document.createElement('div');
+    card.className = 'pos-card';
 
     const lbl = document.createElement('div');
     lbl.className = 'pos-label';
     lbl.textContent = POS_LABELS[pos];
-    block.appendChild(lbl);
+    card.appendChild(lbl);
 
     rows.forEach((r, i) => {
       const [, , name, club, votes, war] = r;
       const isStarter = i < starCount;
       const votePct = Math.round((votes / maxVotes) * 100);
       const warBarPct = Math.max(0, Math.round(((war - MIN_WAR) / WAR_RANGE) * 100));
+      const mlbId = mlbIdMap.get(normName(name));
 
       const row = document.createElement('div');
       row.className = 'player-row' + (isStarter ? ' starter' : '');
+
+      // Headshot
+      const hsWrap = document.createElement('div');
+      hsWrap.className = 'headshot-wrap';
+      if (mlbId) {
+        const img = document.createElement('img');
+        img.src = headshotUrl(mlbId);
+        img.alt = name;
+        img.loading = 'lazy';
+        img.onerror = () => {
+          img.remove();
+          const init = document.createElement('span');
+          init.className = 'headshot-initials';
+          init.textContent = initials(name);
+          hsWrap.appendChild(init);
+        };
+        hsWrap.appendChild(img);
+      } else {
+        const init = document.createElement('span');
+        init.className = 'headshot-initials';
+        init.textContent = initials(name);
+        hsWrap.appendChild(init);
+      }
+
       row.innerHTML = `
         <span class="rank">${i + 1}</span>
         <div class="name-col">
@@ -418,7 +505,7 @@ function buildLeague(lg, colEl) {
         </div>
         <div class="bars-col">
           <div class="bar-row">
-            <div class="bar-track"><div class="bar-fill" style="width:${votePct}%;background:#378ADD;"></div></div>
+            <div class="bar-track"><div class="bar-fill" style="width:${votePct}%;background:#2563eb;"></div></div>
             <span class="bar-val">${fmtVotes(votes)}</span>
           </div>
           <div class="bar-row">
@@ -426,24 +513,23 @@ function buildLeague(lg, colEl) {
             <span class="war-val" style="color:${warTextColor(war)};">${war.toFixed(1)}</span>
           </div>
         </div>
-        ${isStarter
-          ? `<span class="star-badge ${badgeClass}">★</span>`
-          : `<span class="star-spacer"></span>`}
+        ${isStarter ? `<span class="star-badge">★</span>` : `<span class="star-spacer"></span>`}
       `;
-      block.appendChild(row);
+
+      // Prepend headshot before rank
+      row.insertBefore(hsWrap, row.firstChild);
+      card.appendChild(row);
     });
 
-    colEl.appendChild(block);
+    colEl.appendChild(card);
   });
 }
 
-// Normalize player names for fuzzy matching (strip accents, lowercase)
-function normName(s) {
-  return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+function fmtDate(d) {
+  return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 }
 
 async function fetchLiveWAR() {
-  const FG_PROXY = 'https://fg-proxy.vercel.app';
   const params = new URLSearchParams({
     pos: 'all', stats: 'bat', lg: 'all', qual: '0',
     season: '2026', season1: '2026', ind: '0', team: '0',
@@ -452,39 +538,37 @@ async function fetchLiveWAR() {
   const res = await fetch(`${FG_PROXY}/api/fangraphs?${params}`);
   if (!res.ok) throw new Error(`fg-proxy ${res.status}`);
   const json = await res.json();
-  // Build name → WAR lookup
   const lookup = new Map();
   for (const p of (json.data ?? [])) {
-    if (p.PlayerName != null && p.WAR != null) {
-      lookup.set(normName(p.PlayerName), parseFloat(p.WAR));
-    }
+    if (!p.PlayerName) continue;
+    const key = normName(p.PlayerName);
+    lookup.set(key, { war: parseFloat(p.WAR ?? 0), mlbId: p.xMLBAMID ?? p.MLBAMID ?? null });
   }
   return { lookup, fetchedAt: new Date(res.headers.get('Date') || Date.now()) };
 }
 
-function fmtDate(d) {
-  return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-}
-
 async function init() {
-  let warLookup = null;
-
   try {
     const { lookup, fetchedAt } = await fetchLiveWAR();
-    warLookup = lookup;
-    // Patch DATA in place with live WAR values
+
     for (const row of DATA) {
-      const live = lookup.get(normName(row[2]));
-      if (live !== undefined) row[5] = live;
+      const key = normName(row[2]);
+      const live = lookup.get(key);
+      if (live) {
+        row[5] = live.war;
+        if (live.mlbId) mlbIdMap.set(key, live.mlbId);
+      }
     }
-    // Recompute WAR range with live values
-    const allWar = DATA.map(d => d[5]);
-    MAX_WAR = Math.max(...allWar);
-    MIN_WAR = Math.min(...allWar);
+
+    // Recompute range with live values
+    ALL_WAR = DATA.map(d => d[5]);
+    MAX_WAR = Math.max(...ALL_WAR);
+    MIN_WAR = Math.min(...ALL_WAR);
     WAR_RANGE = MAX_WAR - MIN_WAR;
+
     document.getElementById('fwar-date').textContent = fmtDate(fetchedAt);
   } catch (e) {
-    console.warn('fWAR fetch failed, using cached values:', e.message);
+    console.warn('fWAR fetch failed, using fallback values:', e.message);
     document.getElementById('fwar-date').textContent = 'June 15, 2026 (cached)';
   }
 
