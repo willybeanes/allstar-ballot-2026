@@ -434,8 +434,9 @@ function lookupKey(name, team) {
   return normName(name) + '|' + (TEAM_FG[team] || team).toLowerCase();
 }
 
-function warBarColor(w) {
-  const t = Math.max(0, Math.min(1, (w - MIN_WAR) / WAR_RANGE));
+function warBarColor(w, minW, maxW) {
+  const range = maxW - minW || 1;
+  const t = Math.max(0, Math.min(1, (w - minW) / range));
   const r = Math.round(220 + (22  - 220) * t);
   const g = Math.round(38  + (163 - 38)  * t);
   const b = Math.round(38  + (74  - 38)  * t);
@@ -471,6 +472,9 @@ function buildLeague(lg, colEl) {
 
     const maxVotes = Math.max(...rows.map(r => r[4]));
     const starCount = pos === 'OF' ? 3 : 1;
+    const posWars = rows.map(r => r[5]);
+    const posMinWar = Math.min(...posWars);
+    const posMaxWar = Math.max(...posWars);
 
     const card = document.createElement('div');
     card.className = 'pos-card';
@@ -484,7 +488,8 @@ function buildLeague(lg, colEl) {
       const [, , name, club, votes, war] = r;
       const isStarter = i < starCount;
       const votePct = Math.round((votes / maxVotes) * 100);
-      const warBarPct = Math.max(0, Math.round(((war - MIN_WAR) / WAR_RANGE) * 100));
+      const posWarRange = posMaxWar - posMinWar || 1;
+      const warBarPct = Math.max(0, Math.round(((war - posMinWar) / posWarRange) * 100));
       const mlbId = mlbIdMap.get(normName(name) + '|' + club);
 
       const row = document.createElement('div');
@@ -525,7 +530,7 @@ function buildLeague(lg, colEl) {
             <span class="bar-val">${fmtVotes(votes)}</span>
           </div>
           <div class="bar-row">
-            <div class="bar-track"><div class="bar-fill" style="width:${warBarPct}%;background:${warBarColor(war)};"></div></div>
+            <div class="bar-track"><div class="bar-fill" style="width:${warBarPct}%;background:${warBarColor(war, posMinWar, posMaxWar)};"></div></div>
             <span class="war-val" style="color:${warTextColor(war)};">${war.toFixed(1)}</span>
           </div>
         </div>
