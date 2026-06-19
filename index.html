@@ -558,7 +558,7 @@ async function fetchLiveWAR() {
   const params = new URLSearchParams({
     pos: 'all', stats: 'bat', lg: 'all', qual: '0',
     season: '2026', season1: '2026', ind: '0', team: '0',
-    sortstat: 'WAR', sortdir: 'default', pageitems: '500', pagenum: '1',
+    sortstat: 'WAR', sortdir: 'default', pageitems: '1500', pagenum: '1',
   });
   const res = await fetch(`${FG_PROXY}/api/fangraphs?${params}`);
   if (!res.ok) throw new Error(`fg-proxy ${res.status}`);
@@ -568,7 +568,8 @@ async function fetchLiveWAR() {
     if (!p.PlayerName) continue;
     const entry = { war: parseFloat(p.WAR ?? 0), mlbId: p.xMLBAMID ?? p.MLBAMID ?? null };
     // Store by both name|team (preferred) and name-only fallback
-    const teamKey = lookupKey(p.PlayerName, p.Team ?? '');
+    const fgTeam = (p.Team ?? '').replace(/<[^>]+>/g, '').trim();
+    const teamKey = lookupKey(p.PlayerName, fgTeam);
     const nameKey = normName(p.PlayerName);
     lookup.set(teamKey, entry);
     if (!lookup.has(nameKey)) lookup.set(nameKey, entry); // first occurrence wins for name-only
