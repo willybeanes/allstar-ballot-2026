@@ -202,6 +202,69 @@
     }
     .star-spacer { width: 26px; flex-shrink: 0; }
 
+    .hm-section {
+      margin-top: 10px;
+      padding-top: 9px;
+      border-top: 1px dashed #ede9e4;
+    }
+    .hm-label {
+      font-size: 0.62rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #ccc;
+      margin-bottom: 5px;
+    }
+    .hm-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 0;
+      border-bottom: 1px solid #f8f7f5;
+    }
+    .hm-row:last-child { border-bottom: none; }
+    .hm-headshot {
+      width: 28px;
+      height: 28px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      overflow: hidden;
+      background: #f0ede8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .hm-headshot img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+    .hm-initials {
+      font-size: 0.55rem;
+      font-weight: 600;
+      color: #ccc;
+    }
+    .hm-name-col { flex: 1; min-width: 0; }
+    .hm-name {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #888;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      letter-spacing: -0.01em;
+    }
+    .hm-club { font-size: 0.62rem; color: #bbb; margin-top: 1px; }
+    .hm-war {
+      font-size: 0.75rem;
+      font-weight: 600;
+      width: 32px;
+      text-align: right;
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
+    }
+
     footer {
       text-align: center;
       font-size: 0.78rem;
@@ -420,6 +483,22 @@ function normName(s) {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 }
 
+// Team abbreviation → league
+const TEAM_LEAGUE = {
+  LAA:'AL', HOU:'AL', ATH:'AL', OAK:'AL', TOR:'AL', CLE:'AL',
+  SEA:'AL', BAL:'AL', TEX:'AL', TBR:'AL', BOS:'AL', KCR:'AL',
+  DET:'AL', MIN:'AL', CWS:'AL', NYY:'AL',
+  ATL:'NL', MIL:'NL', STL:'NL', CHC:'NL', ARI:'NL', LAD:'NL',
+  SFG:'NL', MIA:'NL', NYM:'NL', WSN:'NL', SDP:'NL', PHI:'NL',
+  PIT:'NL', CIN:'NL', COL:'NL',
+};
+
+// Position param for FanGraphs API
+const POS_FG = { C:'c', '1B':'1b', '2B':'2b', '3B':'3b', SS:'ss', DH:'dh', OF:'of' };
+
+// Honorable mentions: pos|league → [{name, club, war, mlbId}]
+const honorableMap = new Map();
+
 // Map DATA team names → FanGraphs team abbreviations
 const TEAM_FG = {
   'Angels':'LAA','Astros':'HOU','Athletics':'ATH','Blue Jays':'TOR',
@@ -546,12 +625,116 @@ function buildLeague(lg, colEl) {
       card.appendChild(row);
     });
 
+    // Honorable mentions
+    const hm = honorableMap.get(`${pos}|${lg}`);
+    if (hm?.length) {
+      const hmSection = document.createElement('div');
+      hmSection.className = 'hm-section';
+
+      const hmLabel = document.createElement('div');
+      hmLabel.className = 'hm-label';
+      hmLabel.textContent = 'Top fWAR — not on ballot';
+      hmSection.appendChild(hmLabel);
+
+      for (const p of hm) {
+        const hmRow = document.createElement('div');
+        hmRow.className = 'hm-row';
+
+        const hsWrap = document.createElement('div');
+        hsWrap.className = 'hm-headshot';
+        if (p.mlbId) {
+          const img = document.createElement('img');
+          img.src = headshotUrl(p.mlbId);
+          img.alt = p.name;
+          img.loading = 'lazy';
+          img.onerror = () => {
+            img.remove();
+            const init = document.createElement('span');
+            init.className = 'hm-initials';
+            init.textContent = initials(p.name);
+            hsWrap.appendChild(init);
+          };
+          hsWrap.appendChild(img);
+        } else {
+          const init = document.createElement('span');
+          init.className = 'hm-initials';
+          init.textContent = initials(p.name);
+          hsWrap.appendChild(init);
+        }
+
+        const warColor = warTextColor(p.war, Math.min(...hm.map(x => x.war)), Math.max(...hm.map(x => x.war)));
+
+        hmRow.innerHTML = `
+          <div class="hm-name-col">
+            <div class="hm-name">${p.name}</div>
+            <div class="hm-club">${p.club}</div>
+          </div>
+          <span class="hm-war" style="color:${warColor};">${p.war.toFixed(1)}</span>
+        `;
+        hmRow.insertBefore(hsWrap, hmRow.firstChild);
+        hmSection.appendChild(hmRow);
+      }
+
+      card.appendChild(hmSection);
+    }
+
     colEl.appendChild(card);
   });
 }
 
 function fmtDate(d) {
   return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+}
+
+async function fetchPositionWAR(fgPos) {
+  const params = new URLSearchParams({
+    pos: fgPos, stats: 'bat', lg: 'all', qual: '0',
+    season: '2026', season1: '2026', ind: '0', team: '0',
+    sortstat: 'WAR', sortdir: 'default', pageitems: '150', pagenum: '1',
+  });
+  const res = await fetch(`${FG_PROXY}/api/fangraphs?${params}`);
+  if (!res.ok) throw new Error(`fg-proxy ${res.status}`);
+  const json = await res.json();
+  return json.data ?? [];
+}
+
+async function buildHonorableMentions() {
+  // Set of ballot players per pos|league for exclusion
+  const ballotSet = new Set();
+  for (const row of DATA) {
+    ballotSet.add(`${row[1]}|${row[0]}|${normName(row[2])}`);
+  }
+
+  await Promise.all(POS_ORDER.map(async pos => {
+    const fgPos = POS_FG[pos];
+    const players = await fetchPositionWAR(fgPos);
+
+    // Group by league, exclude ballot players, take top 3 by WAR
+    const byLeague = { AL: [], NL: [] };
+    for (const p of players) {
+      const name = p.PlayerName || '';
+      const fgTeam = (p.Team ?? '').replace(/<[^>]+>/g, '').trim();
+      const league = TEAM_LEAGUE[fgTeam];
+      if (!league) continue;
+      const war = parseFloat(p.WAR ?? 0);
+      if (isNaN(war)) continue;
+      const key = `${pos}|${league}|${normName(name)}`;
+      if (ballotSet.has(key)) continue;
+      byLeague[league].push({
+        name,
+        club: fgTeam,
+        war,
+        mlbId: p.xMLBAMID ?? p.MLBAMID ?? null,
+      });
+    }
+
+    for (const lg of ['AL', 'NL']) {
+      const top = byLeague[lg]
+        .sort((a, b) => b.war - a.war)
+        .slice(0, 3);
+      if (top.length) honorableMap.set(`${pos}|${lg}`, top);
+    }
+  }));
 }
 
 async function fetchLiveWAR() {
@@ -601,6 +784,8 @@ async function init() {
     console.warn('fWAR fetch failed, using fallback values:', e.message);
     document.getElementById('fwar-date').textContent = 'June 15, 2026 (cached)';
   }
+
+  await buildHonorableMentions();
 
   buildLeague('AL', document.getElementById('al-col'));
   buildLeague('NL', document.getElementById('nl-col'));
