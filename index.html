@@ -493,11 +493,100 @@ const TEAM_LEAGUE = {
   PIT:'NL', CIN:'NL', COL:'NL',
 };
 
-// Position param for FanGraphs API
-const POS_FG = { C:'c', '1B':'1b', '2B':'2b', '3B':'3b', SS:'ss', DH:'dh', OF:'of' };
+// All MLB ballot nominees (AL + NL combined per position) — normalized at build time
+const BALLOT_RAW = {
+  C: [
+    // AL
+    'Yainer Diaz','Dillon Dingler','Nick Fortes','Austin Hedges','Danny Jansen',
+    'Ryan Jeffers','Alejandro Kirk','Shea Langeliers','Carlos Narváez','Logan O\'Hoppe',
+    'Salvador Perez','Edgar Quero','Cal Raleigh','Adley Rutschman','Austin Wells',
+    // NL
+    'Francisco Alvarez','Drake Baldwin','William Contreras','Henry Davis','Freddy Fermin',
+    'Hunter Goodman','Liam Hicks','Carson Kelly','Gabriel Moreno','Pedro Pagés',
+    'J.T. Realmuto','Keibert Ruiz','Will Smith','Tyler Stephenson','Daniel Susac',
+  ],
+  '1B': [
+    // AL
+    'Pete Alonso','Jonathan Aranda','Jake Burger','Kody Clemens','Willson Contreras',
+    'Vladimir Guerrero Jr.','Nick Kurtz','Kyle Manzardo','Munetaka Murakami','Josh Naylor',
+    'Vinnie Pasquantino','Ben Rice','Nolan Schanuel','Spencer Torkelson','Christian Walker',
+    // NL
+    'Jake Bauers','Alec Burleson','Michael Busch','Rafael Devers','Freddie Freeman',
+    'Luis García Jr.','Bryce Harper','Spencer Horwitz','Connor Norby','Matt Olson',
+    'TJ Rumfield','Gavin Sheets','Sal Stewart','Ildemaro Vargas','Mark Vientos',
+  ],
+  '2B': [
+    // AL
+    'Jose Altuve','Travis Bazzana','Jazz Chisholm Jr.','Ernie Clement','Ezequiel Duran',
+    'Vaughn Grissom','Jeremiah Jackson','Luke Keaschall','Michael Massey','Marcelo Mayer',
+    'Jeff McNeil','Chase Meidroth','Gleyber Torres','Ben Williamson','Cole Young',
+    // NL
+    'Ozzie Albies','Luis Arraez','Willi Castro','Jake Cronenworth','Xavier Edwards',
+    'Nico Hoerner','Hyeseong Kim','Brandon Lowe','Ketel Marte','Matt McLain',
+    'Nasim Nuñez','Marcus Semien','Bryson Stott','Brice Turang','JJ Wetherholt',
+  ],
+  '3B': [
+    // AL
+    'Junior Caminero','Brendan Donovan','Caleb Durbin','Maikel Garcia','Zack Gelof',
+    'Josh Jung','Royce Lewis','Coby Mayo','Zach McKinstry','Ryan McMahon',
+    'Kazuma Okamoto','Isaac Paredes','Oswald Peraza','José Ramírez','Miguel Vargas',
+    // NL
+    'Nolan Arenado','Bo Bichette','Alec Bohm','Alex Bregman','Matt Chapman',
+    'Nick Gonzales','Nolan Gorman','Ke\'Bryan Hayes','Kyle Karros','Manny Machado',
+    'Curtis Mead','Max Muncy','Luis Rengifo','Austin Riley','Javier Sanoja',
+  ],
+  SS: [
+    // AL
+    'José Caballero','J.P. Crawford','Andrés Giménez','Gunnar Henderson','Brooks Lee',
+    'Kevin McGonigle','Colson Montgomery','Zach Neto','Jeremy Peña','Brayan Rocchio',
+    'Corey Seager','Trevor Story','Taylor Walls','Jacob Wilson','Bobby Witt Jr.',
+    // NL
+    'CJ Abrams','Willy Adames','Mookie Betts','Xander Bogaerts','Elly De La Cruz',
+    'Konnor Griffin','Ha-Seong Kim','Francisco Lindor','Otto Lopez','Joey Ortiz',
+    'Geraldo Perdomo','Dansby Swanson','Ezequiel Tovar','Trea Turner','Masyn Winn',
+  ],
+  DH: [
+    // AL
+    'Yordan Alvarez','Roman Anthony','Samuel Basallo','Josh Bell','Andrew Benintendi',
+    'Dominic Canzone','Chase DeLauter','Yandy Díaz','Carter Jensen','Colt Keith',
+    'Joc Pederson','Brent Rooker','Jorge Soler','George Springer','Giancarlo Stanton',
+    // NL
+    'Miguel Andujar','Moisés Ballesteros','Heriberto Hernández','Iván Herrera','Troy Johnston',
+    'Shohei Ohtani','Marcell Ozuna','Jorge Polanco','Casey Schmitt','Kyle Schwarber',
+    'Pavin Smith','Dominic Smith','Eugenio Suárez','José Tena','Christian Yelich',
+  ],
+  OF: [
+    // AL
+    'Wilyer Abreu','Jo Adell','Sam Antonacci','Randy Arozarena','Javier Báez',
+    'Dylan Beavers','Cody Bellinger','Lawrence Butler','Byron Buxton','Jac Caglianone',
+    'Kerry Carpenter','Evan Carter','Isaac Collins','Carlos Cortes','Jarren Duran',
+    'Riley Greene','Trent Grisham','Derek Hill','Kyle Isbel','Aaron Judge',
+    'Steven Kwan','Wyatt Langford','Trevor Larnach','Austin Martin','Angel Martínez',
+    'Brice Matthews','Wade Meckler','Jake Meyers','Cedric Mullins','Brandon Nimmo',
+    'Tristan Peters','Ceddanne Rafaela','Luke Raley','Julio Rodríguez','Jesús Sánchez',
+    'Daniel Schneemann','Chandler Simpson','Cam Smith','Tyler Soderstrom','Myles Straw',
+    'Leody Taveras','Mike Trout','Daulton Varsho','Ryan Vilade','Taylor Ward',
+    // NL
+    'Ronald Acuña Jr.','Harrison Bader','Carson Benge','JJ Bleday','Owen Caissie',
+    'Corbin Carroll','Jackson Chourio','Nathan Church','Justin Crawford','Pete Crow-Armstrong',
+    'Oneil Cruz','Brenton Doyle','Mauricio Dubón','Sal Frelick','TJ Friedl',
+    'Adolis García','Lourdes Gurriel Jr.','Ian Happ','Michael Harris II','Teoscar Hernández',
+    'Ramón Laureano','Jung Hoo Lee','Daylen Lile','Jakob Marsee','Brandon Marsh',
+    'Jake McCarthy','Jackson Merrill','Garrett Mitchell','Mickey Moniak','Ryan O\'Hearn',
+    'Andy Pages','Heliot Ramos','Bryan Reynolds','Luis Robert Jr.','Victor Scott II',
+    'Juan Soto','Spencer Steer','Kyle Stowers','Seiya Suzuki','Fernando Tatis Jr.',
+    'Kyle Tucker','Ryan Waldschmidt','Jordan Walker','James Wood','Jacob Young',
+  ],
+};
+
+// Pre-normalize ballot names into Sets for fast lookup
+let BALLOT_NAMES = {};
 
 // Honorable mentions: pos|league → [{name, club, war, mlbId}]
 const honorableMap = new Map();
+
+// All FG player data stored after live fetch for HM use
+let allFGPlayers = [];
 
 // Map DATA team names → FanGraphs team abbreviations
 const TEAM_FG = {
@@ -633,7 +722,7 @@ function buildLeague(lg, colEl) {
 
       const hmLabel = document.createElement('div');
       hmLabel.className = 'hm-label';
-      hmLabel.textContent = 'Top fWAR — not on ballot';
+      hmLabel.textContent = 'Top fWAR — on ballot, not in top 10';
       hmSection.appendChild(hmLabel);
 
       for (const p of hm) {
@@ -686,40 +775,29 @@ function fmtDate(d) {
   return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 }
 
-async function fetchPositionWAR(fgPos) {
-  const params = new URLSearchParams({
-    pos: fgPos, stats: 'bat', lg: 'all', qual: '0',
-    season: '2026', season1: '2026', ind: '0', team: '0',
-    sortstat: 'WAR', sortdir: 'default', pageitems: '150', pagenum: '1',
-  });
-  const res = await fetch(`${FG_PROXY}/api/fangraphs?${params}`);
-  if (!res.ok) throw new Error(`fg-proxy ${res.status}`);
-  const json = await res.json();
-  return json.data ?? [];
-}
-
-async function buildHonorableMentions() {
-  // Set of ballot players per pos|league for exclusion
-  const ballotSet = new Set();
-  for (const row of DATA) {
-    ballotSet.add(`${row[1]}|${row[0]}|${normName(row[2])}`);
+function buildHonorableMentions() {
+  // Pre-normalize ballot names per position (done once, after normName is defined)
+  for (const [pos, names] of Object.entries(BALLOT_RAW)) {
+    BALLOT_NAMES[pos] = new Set(names.map(normName));
   }
 
-  await Promise.all(POS_ORDER.map(async pos => {
-    const fgPos = POS_FG[pos];
-    const players = await fetchPositionWAR(fgPos);
+  // Top-10 vote-getters already shown in DATA — exclude them
+  const top10Set = new Set(DATA.map(row => `${row[1]}|${row[0]}|${normName(row[2])}`));
 
-    // Group by league, exclude ballot players, take top 3 by WAR
+  for (const pos of POS_ORDER) {
+    const ballotForPos = BALLOT_NAMES[pos];
+    if (!ballotForPos) continue;
+
     const byLeague = { AL: [], NL: [] };
-    for (const p of players) {
+    for (const p of allFGPlayers) {
       const name = p.PlayerName || '';
       const fgTeam = (p.Team ?? '').replace(/<[^>]+>/g, '').trim();
       const league = TEAM_LEAGUE[fgTeam];
       if (!league) continue;
+      if (!ballotForPos.has(normName(name))) continue;
+      if (top10Set.has(`${pos}|${league}|${normName(name)}`)) continue;
       const war = parseFloat(p.WAR ?? 0);
       if (isNaN(war)) continue;
-      const key = `${pos}|${league}|${normName(name)}`;
-      if (ballotSet.has(key)) continue;
       byLeague[league].push({
         name,
         club: fgTeam,
@@ -729,12 +807,10 @@ async function buildHonorableMentions() {
     }
 
     for (const lg of ['AL', 'NL']) {
-      const top = byLeague[lg]
-        .sort((a, b) => b.war - a.war)
-        .slice(0, 3);
+      const top = byLeague[lg].sort((a, b) => b.war - a.war).slice(0, 3);
       if (top.length) honorableMap.set(`${pos}|${lg}`, top);
     }
-  }));
+  }
 }
 
 async function fetchLiveWAR() {
@@ -746,8 +822,9 @@ async function fetchLiveWAR() {
   const res = await fetch(`${FG_PROXY}/api/fangraphs?${params}`);
   if (!res.ok) throw new Error(`fg-proxy ${res.status}`);
   const json = await res.json();
+  allFGPlayers = json.data ?? [];
   const lookup = new Map();
-  for (const p of (json.data ?? [])) {
+  for (const p of allFGPlayers) {
     if (!p.PlayerName) continue;
     const entry = { war: parseFloat(p.WAR ?? 0), mlbId: p.xMLBAMID ?? p.MLBAMID ?? null };
     // Store by both name|team (preferred) and name-only fallback
@@ -785,7 +862,7 @@ async function init() {
     document.getElementById('fwar-date').textContent = 'June 15, 2026 (cached)';
   }
 
-  await buildHonorableMentions();
+  buildHonorableMentions();
 
   buildLeague('AL', document.getElementById('al-col'));
   buildLeague('NL', document.getElementById('nl-col'));
