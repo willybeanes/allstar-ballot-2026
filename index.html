@@ -285,6 +285,57 @@ const ALL_STAR_RESERVES = new Set([
   'Jordan Walker','Kyle Schwarber',
 ]);
 
+// Full All-Star roster with league/pos/club so missing ballot players can be appended
+const ALL_STAR_INFO = [
+  // AL
+  ['Shea Langeliers','AL','C','Athletics'],
+  ['Dillon Dingler','AL','C','Tigers'],
+  ['Adley Rutschman','AL','C','Orioles'],
+  ['Vladimir Guerrero Jr.','AL','1B','Blue Jays'],
+  ['Nick Kurtz','AL','1B','Athletics'],
+  ['Ben Rice','AL','1B','Yankees'],
+  ['Willson Contreras','AL','1B','Red Sox'],
+  ['Ernie Clement','AL','2B','Blue Jays'],
+  ['Travis Bazzana','AL','2B','Guardians'],
+  ['Junior Caminero','AL','3B','Rays'],
+  ['Miguel Vargas','AL','3B','White Sox'],
+  ['Bobby Witt Jr.','AL','SS','Royals'],
+  ['Kevin McGonigle','AL','SS','Tigers'],
+  ['Yordan Alvarez','AL','DH','Astros'],
+  ['Yandy Díaz','AL','DH','Rays'],
+  ['Aaron Judge','AL','OF','Yankees'],
+  ['Mike Trout','AL','OF','Angels'],
+  ['Byron Buxton','AL','OF','Twins'],
+  ['Randy Arozarena','AL','OF','Mariners'],
+  ['Riley Greene','AL','OF','Tigers'],
+  ['Cody Bellinger','AL','OF','Yankees'],
+  // NL
+  ['Drake Baldwin','NL','C','Braves'],
+  ['William Contreras','NL','C','Brewers'],
+  ['Hunter Goodman','NL','C','Rockies'],
+  ['Freddie Freeman','NL','1B','Dodgers'],
+  ['Matt Olson','NL','1B','Braves'],
+  ['Bryce Harper','NL','1B','Phillies'],
+  ['Ozzie Albies','NL','2B','Braves'],
+  ['Luis Arraez','NL','2B','Giants'],
+  ['Max Muncy','NL','3B','Dodgers'],
+  ['Sal Stewart','NL','3B','Reds'],
+  ['CJ Abrams','NL','SS','Nationals'],
+  ['Otto Lopez','NL','SS','Marlins'],
+  ['Shohei Ohtani','NL','DH','Dodgers'],
+  ['Kyle Schwarber','NL','DH','Phillies'],
+  ['Andy Pages','NL','OF','Dodgers'],
+  ['Brandon Marsh','NL','OF','Phillies'],
+  ['Juan Soto','NL','OF','Mets'],
+  ['Pete Crow-Armstrong','NL','OF','Cubs'],
+  ['Corbin Carroll','NL','OF','D-backs'],
+  ['James Wood','NL','OF','Nationals'],
+  ['Jordan Walker','NL','OF','Cardinals'],
+];
+
+// Live fWAR lookup populated after fetch (name|team → {war, mlbId})
+let fgLookup = new Map();
+
 // [league, pos, name, club, votes, fWAR (fallback)]
 const DATA = [
   ["AL","C","Shea Langeliers","Athletics",1414697,2.4],
@@ -523,7 +574,16 @@ function buildLeague(lg, colEl) {
   const lgData = DATA.filter(d => d[0] === lg);
 
   POS_ORDER.forEach(pos => {
-    const rows = lgData.filter(d => d[1] === pos).sort((a, b) => b[5] - a[5]);
+    const rows = lgData.filter(d => d[1] === pos);
+    // Append any All-Stars missing from the ballot top-10 for this position
+    const inRows = new Set(rows.map(r => r[2]));
+    for (const [name, asLg, asPos, club] of ALL_STAR_INFO) {
+      if (asLg !== lg || asPos !== pos || inRows.has(name)) continue;
+      const live = fgLookup.get(lookupKey(name, club)) ?? fgLookup.get(normName(name));
+      rows.push([lg, pos, name, club, 0, live?.war ?? 0]);
+      if (live?.mlbId) mlbIdMap.set(normName(name) + '|' + club, live.mlbId);
+    }
+    rows.sort((a, b) => b[5] - a[5]);
     if (!rows.length) return;
 
     const posWars = rows.map(r => r[5]);
@@ -621,6 +681,7 @@ async function fetchLiveWAR() {
     lookup.set(teamKey, entry);
     if (!lookup.has(nameKey)) lookup.set(nameKey, entry); // first occurrence wins for name-only
   }
+  fgLookup = lookup;
   return { lookup, fetchedAt: new Date(res.headers.get('Date') || Date.now()) };
 }
 
