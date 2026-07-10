@@ -210,6 +210,16 @@
       background: #2563eb;
       letter-spacing: 0.03em;
     }
+    .pitcher-extras-sep {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-secondary, #888);
+      padding: 8px 12px 4px;
+      border-top: 1px solid var(--border, #333);
+      margin-top: 4px;
+    }
     .asg-legend-badge {
       display: inline-block;
       font-size: 0.6rem;
@@ -353,7 +363,7 @@ const ALL_STAR_INFO = [
   ['Jacob Latz','AL','RP','Rangers'],
   ['Bryan Baker','AL','RP','Rays'],
   ['Louis Varland','AL','RP','Blue Jays'],
-  ['Justin Verlander','AL','RP','Astros'],
+  ['Justin Verlander','AL','SP','Astros'],
   // NL pitchers
   ['Chase Burns','NL','SP','Reds'],
   ['Jacob Misiorowski','NL','SP','Brewers'],
@@ -374,8 +384,12 @@ const ALL_STAR_INFO = [
 
 // Live fWAR lookup populated after fetch (name|team → {war, mlbId})
 let fgLookup = new Map();
-// Pitching WAR lookup populated after fetch
-let pitLookup = new Map();
+// Pitching WAR lookups populated after fetch
+let spLookup = new Map();
+let rpLookup = new Map();
+// All FG pitcher rows: [league, pos, name, club, 0, war]
+let allSPRows = [];
+let allRPRows = [];
 
 // [league, pos, name, club, votes, fWAR (fallback)]
 const DATA = [
@@ -580,6 +594,9 @@ const TEAM_FG = {
   'White Sox':'CWS','Yankees':'NYY',
 };
 
+// Reverse map: FanGraphs abbreviation → DATA team name
+const FG_TO_CLUB = Object.fromEntries(Object.entries(TEAM_FG).map(([k,v]) => [v,k]));
+
 function lookupKey(name, team) {
   return normName(name) + '|' + (TEAM_FG[team] || team).toLowerCase();
 }
@@ -616,22 +633,43 @@ function buildLeague(lg, colEl) {
 
   POS_ORDER.forEach(pos => {
     const isPitcher = pos === 'SP' || pos === 'RP';
-    const sourceLookup = isPitcher ? pitLookup : fgLookup;
-    const rows = lgData.filter(d => d[1] === pos);
-    // Append any All-Stars missing from ballot data for this position
-    const inRows = new Set(rows.map(r => r[2]));
-    for (const [name, asLg, asPos, club] of ALL_STAR_INFO) {
-      if (asLg !== lg || asPos !== pos || inRows.has(name)) continue;
-      const live = sourceLookup.get(lookupKey(name, club)) ?? sourceLookup.get(normName(name));
-      rows.push([lg, pos, name, club, 0, live?.war ?? 0]);
-      if (live?.mlbId) mlbIdMap.set(normName(name) + '|' + club, live.mlbId);
-    }
-    rows.sort((a, b) => b[5] - a[5]);
-    // Cap position tables at ballot size; pitcher tables show all
-    if (!isPitcher) rows.splice(pos === 'OF' ? 20 : 10);
-    if (!rows.length) return;
+    let rows, extraRows = [];
 
-    const posWars = rows.map(r => r[5]);
+    if (isPitcher) {
+      const pitRows = (pos === 'SP' ? allSPRows : allRPRows).filter(r => r[0] === lg);
+      pitRows.sort((a, b) => b[5] - a[5]);
+      const topN = pos === 'SP' ? 10 : 10;
+      rows = pitRows.slice(0, topN);
+      const inTop = new Set(rows.map(r => r[2]));
+      // register mlbIds for top-N rows
+      for (const r of rows) {
+        if (r[6]) mlbIdMap.set(normName(r[2]) + '|' + r[3], r[6]);
+      }
+      // Append All-Stars not already in top-N
+      const sourceLookup = pos === 'SP' ? spLookup : rpLookup;
+      for (const [name, asLg, asPos, club] of ALL_STAR_INFO) {
+        if (asLg !== lg || asPos !== pos || inTop.has(name)) continue;
+        const live = sourceLookup.get(lookupKey(name, club)) ?? sourceLookup.get(normName(name));
+        extraRows.push([lg, pos, name, club, 0, live?.war ?? 0]);
+        if (live?.mlbId) mlbIdMap.set(normName(name) + '|' + club, live.mlbId);
+      }
+      extraRows.sort((a, b) => b[5] - a[5]);
+    } else {
+      rows = lgData.filter(d => d[1] === pos);
+      const inRows = new Set(rows.map(r => r[2]));
+      for (const [name, asLg, asPos, club] of ALL_STAR_INFO) {
+        if (asLg !== lg || asPos !== pos || inRows.has(name)) continue;
+        const live = fgLookup.get(lookupKey(name, club)) ?? fgLookup.get(normName(name));
+        rows.push([lg, pos, name, club, 0, live?.war ?? 0]);
+        if (live?.mlbId) mlbIdMap.set(normName(name) + '|' + club, live.mlbId);
+      }
+      rows.sort((a, b) => b[5] - a[5]);
+      rows.splice(pos === 'OF' ? 20 : 10);
+    }
+    if (!rows.length && !extraRows.length) return;
+    const allDisplayRows = [...rows, ...extraRows];
+
+    const posWars = allDisplayRows.map(r => r[5]);
     const posMinWar = Math.min(...posWars);
     const posMaxWar = Math.max(...posWars);
 
@@ -643,7 +681,14 @@ function buildLeague(lg, colEl) {
     lbl.textContent = POS_LABELS[pos];
     card.appendChild(lbl);
 
-    rows.forEach((r, i) => {
+    allDisplayRows.forEach((r, i) => {
+      // Insert separator before extra All-Stars in pitcher tables
+      if (isPitcher && extraRows.length && i === rows.length) {
+        const sep = document.createElement('div');
+        sep.className = 'pitcher-extras-sep';
+        sep.textContent = 'All-Stars not in top 10';
+        card.appendChild(sep);
+      }
       const [, , name, club, , war] = r;
       const isStarter = ALL_STAR_STARTERS.has(name);
       const isReserve = !isStarter && ALL_STAR_RESERVES.has(name);
@@ -706,7 +751,7 @@ function fmtDate(d) {
 }
 
 
-async function fetchPitchingWAR() {
+async function fetchAllPitchers() {
   const params = new URLSearchParams({
     pos: 'all', stats: 'pit', lg: 'all', qual: '0',
     season: '2026', season1: '2026', ind: '0', team: '0',
@@ -715,15 +760,28 @@ async function fetchPitchingWAR() {
   const res = await fetch(`${FG_PROXY}/api/fangraphs?${params}`);
   if (!res.ok) throw new Error(`fg-proxy ${res.status}`);
   const json = await res.json();
-  const lookup = new Map();
+  const spLk = new Map(), rpLk = new Map();
+  const spR = [], rpR = [];
   for (const p of (json.data ?? [])) {
     if (!p.PlayerName) continue;
-    const entry = { war: parseFloat(p.WAR ?? 0), mlbId: p.xMLBAMID ?? p.MLBAMID ?? null };
+    const war = parseFloat(p.WAR ?? 0);
+    const mlbId = p.xMLBAMID ?? p.MLBAMID ?? null;
+    const entry = { war, mlbId };
     const fgTeam = (p.Team ?? '').replace(/<[^>]+>/g, '').trim();
-    lookup.set(lookupKey(p.PlayerName, fgTeam), entry);
-    if (!lookup.has(normName(p.PlayerName))) lookup.set(normName(p.PlayerName), entry);
+    const lg = TEAM_LEAGUE[fgTeam];
+    const club = FG_TO_CLUB[fgTeam] || fgTeam;
+    // Classify SP vs RP by games started (GS). If GS >= half of G, they're a starter.
+    const gs = parseFloat(p.GS ?? p.GS_ ?? 0);
+    const g = parseFloat(p.G ?? 1);
+    const isSP = gs >= 3 && (gs / g) >= 0.4;
+    const lk = isSP ? spLk : rpLk;
+    lk.set(lookupKey(p.PlayerName, fgTeam), entry);
+    if (!lk.has(normName(p.PlayerName))) lk.set(normName(p.PlayerName), entry);
+    if (!lg) continue;
+    (isSP ? spR : rpR).push([lg, isSP ? 'SP' : 'RP', p.PlayerName, club, 0, war, mlbId]);
   }
-  pitLookup = lookup;
+  spLookup = spLk; rpLookup = rpLk;
+  allSPRows = spR; allRPRows = rpR;
 }
 
 async function fetchLiveWAR() {
@@ -752,7 +810,7 @@ async function fetchLiveWAR() {
 
 async function init() {
   try {
-    const [{ lookup, fetchedAt }] = await Promise.all([fetchLiveWAR(), fetchPitchingWAR()]);
+    const [{ lookup, fetchedAt }] = await Promise.all([fetchLiveWAR(), fetchAllPitchers()]);
 
     for (const row of DATA) {
       // Prefer name|team match to avoid same-name collisions (e.g. two Max Muncys)
