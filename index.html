@@ -680,7 +680,7 @@ function buildLeague(lg, colEl) {
   const lgData = DATA.filter(d => d[0] === lg);
 
   POS_ORDER.forEach(pos => {
-    const rows = lgData.filter(d => d[1] === pos);
+    const rows = lgData.filter(d => d[1] === pos).sort((a, b) => b[5] - a[5]);
     if (!rows.length) return;
 
     const posWars = rows.map(r => r[5]);
