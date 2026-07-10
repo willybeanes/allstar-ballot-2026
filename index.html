@@ -258,13 +258,14 @@
 
 <script>
 const FG_PROXY = 'https://fg-proxy.vercel.app';
-const POS_ORDER = ['C','1B','2B','3B','SS','DH','OF'];
+const POS_ORDER = ['C','1B','2B','3B','SS','DH','OF','SP','RP'];
 const POS_LABELS = {
   C:'Catcher', '1B':'First Base', '2B':'Second Base',
-  '3B':'Third Base', SS:'Shortstop', DH:'DH / Utility', OF:'Outfield'
+  '3B':'Third Base', SS:'Shortstop', DH:'DH / Utility', OF:'Outfield',
+  SP:'Starting Pitchers', RP:'Relief Pitchers',
 };
 
-// Official 2026 All-Star rosters (position players only)
+// Official 2026 All-Star rosters
 const ALL_STAR_STARTERS = new Set([
   // AL
   'Shea Langeliers','Vladimir Guerrero Jr.','Ernie Clement','Junior Caminero',
@@ -275,14 +276,22 @@ const ALL_STAR_STARTERS = new Set([
 ]);
 
 const ALL_STAR_RESERVES = new Set([
-  // AL
+  // AL position
   'Dillon Dingler','Adley Rutschman','Nick Kurtz','Ben Rice','Willson Contreras',
   'Travis Bazzana','Miguel Vargas','Kevin McGonigle','Randy Arozarena','Riley Greene',
   'Cody Bellinger','Yandy Díaz',
-  // NL
+  // NL position
   'William Contreras','Hunter Goodman','Matt Olson','Bryce Harper','Luis Arraez',
   'Sal Stewart','Otto Lopez','Pete Crow-Armstrong','Corbin Carroll','James Wood',
   'Jordan Walker','Kyle Schwarber',
+  // AL pitchers
+  'Dylan Cease','Joe Ryan','Ranger Suarez','Parker Messick','Drew Rasmussen',
+  'Cam Schlittler','Michael Wacha','Aroldis Chapman','Cade Smith','Jacob Latz',
+  'Bryan Baker','Louis Varland','Justin Verlander',
+  // NL pitchers
+  'Chase Burns','Jacob Misiorowski','Chris Sale','Cristopher Sánchez','Paul Skenes',
+  'Max Meyer','Yoshinobu Yamamoto','Logan Webb','Eduardo Rodriguez','Braxton Ashcraft',
+  'Jesús Luzardo','Jhoan Duran','Raisel Iglesias','Mason Miller','Riley O\'Brien',
 ]);
 
 // Full All-Star roster with league/pos/club so missing ballot players can be appended
@@ -331,10 +340,42 @@ const ALL_STAR_INFO = [
   ['Corbin Carroll','NL','OF','D-backs'],
   ['James Wood','NL','OF','Nationals'],
   ['Jordan Walker','NL','OF','Cardinals'],
+  // AL pitchers
+  ['Dylan Cease','AL','SP','Blue Jays'],
+  ['Joe Ryan','AL','SP','Twins'],
+  ['Ranger Suarez','AL','SP','Red Sox'],
+  ['Parker Messick','AL','SP','Guardians'],
+  ['Drew Rasmussen','AL','SP','Rays'],
+  ['Cam Schlittler','AL','SP','Yankees'],
+  ['Michael Wacha','AL','SP','Royals'],
+  ['Aroldis Chapman','AL','RP','Red Sox'],
+  ['Cade Smith','AL','RP','Guardians'],
+  ['Jacob Latz','AL','RP','Rangers'],
+  ['Bryan Baker','AL','RP','Rays'],
+  ['Louis Varland','AL','RP','Blue Jays'],
+  ['Justin Verlander','AL','RP','Astros'],
+  // NL pitchers
+  ['Chase Burns','NL','SP','Reds'],
+  ['Jacob Misiorowski','NL','SP','Brewers'],
+  ['Chris Sale','NL','SP','Braves'],
+  ['Cristopher Sánchez','NL','SP','Phillies'],
+  ['Paul Skenes','NL','SP','Pirates'],
+  ['Max Meyer','NL','SP','Marlins'],
+  ['Yoshinobu Yamamoto','NL','SP','Dodgers'],
+  ['Logan Webb','NL','SP','Giants'],
+  ['Eduardo Rodriguez','NL','SP','D-backs'],
+  ['Braxton Ashcraft','NL','SP','Pirates'],
+  ['Jesús Luzardo','NL','SP','Phillies'],
+  ['Jhoan Duran','NL','RP','Phillies'],
+  ['Raisel Iglesias','NL','RP','Braves'],
+  ['Mason Miller','NL','RP','Padres'],
+  ["Riley O'Brien",'NL','RP','Cardinals'],
 ];
 
 // Live fWAR lookup populated after fetch (name|team → {war, mlbId})
 let fgLookup = new Map();
+// Pitching WAR lookup populated after fetch
+let pitLookup = new Map();
 
 // [league, pos, name, club, votes, fWAR (fallback)]
 const DATA = [
@@ -574,16 +615,20 @@ function buildLeague(lg, colEl) {
   const lgData = DATA.filter(d => d[0] === lg);
 
   POS_ORDER.forEach(pos => {
+    const isPitcher = pos === 'SP' || pos === 'RP';
+    const sourceLookup = isPitcher ? pitLookup : fgLookup;
     const rows = lgData.filter(d => d[1] === pos);
-    // Append any All-Stars missing from the ballot top-10 for this position
+    // Append any All-Stars missing from ballot data for this position
     const inRows = new Set(rows.map(r => r[2]));
     for (const [name, asLg, asPos, club] of ALL_STAR_INFO) {
       if (asLg !== lg || asPos !== pos || inRows.has(name)) continue;
-      const live = fgLookup.get(lookupKey(name, club)) ?? fgLookup.get(normName(name));
+      const live = sourceLookup.get(lookupKey(name, club)) ?? sourceLookup.get(normName(name));
       rows.push([lg, pos, name, club, 0, live?.war ?? 0]);
       if (live?.mlbId) mlbIdMap.set(normName(name) + '|' + club, live.mlbId);
     }
     rows.sort((a, b) => b[5] - a[5]);
+    // Cap position tables at ballot size; pitcher tables show all
+    if (!isPitcher) rows.splice(pos === 'OF' ? 20 : 10);
     if (!rows.length) return;
 
     const posWars = rows.map(r => r[5]);
@@ -661,6 +706,26 @@ function fmtDate(d) {
 }
 
 
+async function fetchPitchingWAR() {
+  const params = new URLSearchParams({
+    pos: 'all', stats: 'pit', lg: 'all', qual: '0',
+    season: '2026', season1: '2026', ind: '0', team: '0',
+    sortstat: 'WAR', sortdir: 'default', pageitems: '500', pagenum: '1',
+  });
+  const res = await fetch(`${FG_PROXY}/api/fangraphs?${params}`);
+  if (!res.ok) throw new Error(`fg-proxy ${res.status}`);
+  const json = await res.json();
+  const lookup = new Map();
+  for (const p of (json.data ?? [])) {
+    if (!p.PlayerName) continue;
+    const entry = { war: parseFloat(p.WAR ?? 0), mlbId: p.xMLBAMID ?? p.MLBAMID ?? null };
+    const fgTeam = (p.Team ?? '').replace(/<[^>]+>/g, '').trim();
+    lookup.set(lookupKey(p.PlayerName, fgTeam), entry);
+    if (!lookup.has(normName(p.PlayerName))) lookup.set(normName(p.PlayerName), entry);
+  }
+  pitLookup = lookup;
+}
+
 async function fetchLiveWAR() {
   const params = new URLSearchParams({
     pos: 'all', stats: 'bat', lg: 'all', qual: '0',
@@ -687,7 +752,7 @@ async function fetchLiveWAR() {
 
 async function init() {
   try {
-    const { lookup, fetchedAt } = await fetchLiveWAR();
+    const [{ lookup, fetchedAt }] = await Promise.all([fetchLiveWAR(), fetchPitchingWAR()]);
 
     for (const row of DATA) {
       // Prefer name|team match to avoid same-name collisions (e.g. two Max Muncys)
