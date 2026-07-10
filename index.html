@@ -200,6 +200,27 @@
       color: #fff;
       background: #1a1a1a;
     }
+    .reserve-badge {
+      font-size: 0.6rem;
+      font-weight: 700;
+      padding: 3px 5px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      color: #fff;
+      background: #2563eb;
+      letter-spacing: 0.03em;
+    }
+    .asg-legend-badge {
+      display: inline-block;
+      font-size: 0.6rem;
+      font-weight: 700;
+      padding: 2px 5px;
+      border-radius: 4px;
+      color: #fff;
+      background: #2563eb;
+      letter-spacing: 0.03em;
+      vertical-align: middle;
+    }
     .star-spacer { width: 26px; flex-shrink: 0; }
 
     .hm-section {
@@ -278,9 +299,8 @@
 
 <header>
   <h1>2026 MLB All-Star Ballot</h1>
-  <p>★ = current starter &nbsp;·&nbsp; Votes updated <span id="votes-date">June 22, 2026</span> &nbsp;·&nbsp; fWAR updated <span id="fwar-date">loading…</span></p>
+  <p>★ = All-Star Starter &nbsp;·&nbsp; <span class="asg-legend-badge">ASG</span> = All-Star Reserve &nbsp;·&nbsp; fWAR updated <span id="fwar-date">loading…</span></p>
   <div class="legend">
-    <div class="legend-item"><span class="legend-swatch" style="background:#2563eb;"></span> Votes (vs. position leader)</div>
     <div class="legend-item"><span class="legend-swatch" style="background:#16a34a;"></span><span class="legend-swatch" style="background:#dc2626;"></span> fWAR (green = high · red = low)</div>
   </div>
 </header>
@@ -305,6 +325,27 @@ const POS_LABELS = {
   C:'Catcher', '1B':'First Base', '2B':'Second Base',
   '3B':'Third Base', SS:'Shortstop', DH:'DH / Utility', OF:'Outfield'
 };
+
+// Official 2026 All-Star rosters (position players only)
+const ALL_STAR_STARTERS = new Set([
+  // AL
+  'Shea Langeliers','Vladimir Guerrero Jr.','Ernie Clement','Junior Caminero',
+  'Bobby Witt Jr.','Yordan Alvarez','Aaron Judge','Mike Trout','Byron Buxton',
+  // NL
+  'Drake Baldwin','Freddie Freeman','Ozzie Albies','Max Muncy','CJ Abrams',
+  'Shohei Ohtani','Brandon Marsh','Juan Soto','Andy Pages',
+]);
+
+const ALL_STAR_RESERVES = new Set([
+  // AL
+  'Dillon Dingler','Adley Rutschman','Nick Kurtz','Ben Rice','Willson Contreras',
+  'Travis Bazzana','Miguel Vargas','Kevin McGonigle','Randy Arozarena','Riley Greene',
+  'Cody Bellinger','Yandy Díaz',
+  // NL
+  'William Contreras','Hunter Goodman','Matt Olson','Bryce Harper','Luis Arraez',
+  'Sal Stewart','Otto Lopez','Pete Crow-Armstrong','Corbin Carroll','James Wood',
+  'Jordan Walker','Kyle Schwarber',
+]);
 
 // [league, pos, name, club, votes, fWAR (fallback)]
 const DATA = [
@@ -642,8 +683,6 @@ function buildLeague(lg, colEl) {
     const rows = lgData.filter(d => d[1] === pos);
     if (!rows.length) return;
 
-    const maxVotes = Math.max(...rows.map(r => r[4]));
-    const starCount = pos === 'OF' ? 3 : 1;
     const posWars = rows.map(r => r[5]);
     const posMinWar = Math.min(...posWars);
     const posMaxWar = Math.max(...posWars);
@@ -657,9 +696,9 @@ function buildLeague(lg, colEl) {
     card.appendChild(lbl);
 
     rows.forEach((r, i) => {
-      const [, , name, club, votes, war] = r;
-      const isStarter = i < starCount;
-      const votePct = Math.round((votes / maxVotes) * 100);
+      const [, , name, club, , war] = r;
+      const isStarter = ALL_STAR_STARTERS.has(name);
+      const isReserve = !isStarter && ALL_STAR_RESERVES.has(name);
       const posWarRange = posMaxWar - posMinWar || 1;
       const warBarPct = Math.max(0, Math.round(((war - posMinWar) / posWarRange) * 100));
       const mlbId = mlbIdMap.get(normName(name) + '|' + club);
@@ -698,15 +737,11 @@ function buildLeague(lg, colEl) {
         </div>
         <div class="bars-col">
           <div class="bar-row">
-            <div class="bar-track"><div class="bar-fill" style="width:${votePct}%;background:#2563eb;"></div></div>
-            <span class="bar-val">${fmtVotes(votes)}</span>
-          </div>
-          <div class="bar-row">
             <div class="bar-track"><div class="bar-fill" style="width:${warBarPct}%;background:${warBarColor(war, posMinWar, posMaxWar)};"></div></div>
             <span class="war-val" style="color:${warTextColor(war, posMinWar, posMaxWar)};">${war.toFixed(1)}</span>
           </div>
         </div>
-        ${isStarter ? `<span class="star-badge">★</span>` : `<span class="star-spacer"></span>`}
+        ${isStarter ? `<span class="star-badge">★</span>` : isReserve ? `<span class="reserve-badge">ASG</span>` : `<span class="star-spacer"></span>`}
       `;
 
       // Prepend headshot before rank
