@@ -2,7 +2,7 @@
   "redirects": [
     {
       "source": "/(.*)",
-      "destination": "https://baseball-hopper.vercel.app/ballot",
+      "destination": "https://baseballhopper.com/ballot",
       "permanent": false
     }
   ]
